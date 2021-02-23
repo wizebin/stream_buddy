@@ -8,12 +8,12 @@ import Measure from './components/Measure';
 import { constrainAspectRatio } from './utilities/constrainAspectRatio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function App(props) {
+export default function App() {
   const [credentials, setCredentials] = useState({});
   const [recording, setRecording] = useState(false);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState();
-  const [screenshotTimeout, setScreenshotTimeout] = useState(1000);
+  const [screenshotTimeout] = useState(1000);
   const [pausedRecording, setPausedRecording] = useState(false);
   const [imageSource, setImageSource] = useState(null);
   const [imageDimensions, setImageDimensions] = useState(null);
@@ -56,7 +56,7 @@ export default function App(props) {
         setError(null);
         obs.current = new OBS();
 
-        obs.current.on('AuthenticationSuccess', (data) => setConnected(true));
+        obs.current.on('AuthenticationSuccess', () => setConnected(true));
         obs.current.on('AuthenticationFailure', (data) => {
           cleanup();
           setError(data);

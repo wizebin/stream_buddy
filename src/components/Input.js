@@ -1,6 +1,5 @@
-import { isString } from 'lodash';
 import React from 'react';
-import { Text, TextInput } from 'react-native';
+import { TextInput } from 'react-native';
 
 const defaultStyle = {
   padding: 12,
