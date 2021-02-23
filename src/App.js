@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { Image, SafeAreaView, Text, View } from 'react-native';
 import Button from './components/Button';
 import ModalButton from './components/ModalButton';
@@ -40,6 +40,7 @@ export default function App(props) {
       obs.current?.disconnect();
       obs.current = null;
       setConnected(false);
+
     }
   };
 
@@ -79,21 +80,29 @@ export default function App(props) {
 
   const grabScreenshot = async () => {
     if (obs.current) {
-      const sourceSettings = await obs.current.send('GetVideoInfo');
-      const imageData = await obs.current.send('TakeSourceScreenshot', { embedPictureFormat: 'png', width: 600 });
+      try {
+        const sourceSettings = await obs.current.send('GetVideoInfo');
+        const imageData = await obs.current.send('TakeSourceScreenshot', { embedPictureFormat: 'png', width: 600 });
 
-      const { outputHeight, outputWidth } = sourceSettings;
-      setImageDimensions({ width: outputWidth, height: outputHeight });
-      setImageSource(imageData?.img);
+        const { outputHeight, outputWidth } = sourceSettings;
+        setImageDimensions({ width: outputWidth, height: outputHeight });
+        setImageSource(imageData?.img);
+      } catch (err) {
+        if (err?.code === 'NOT_CONNECTED') {
+          cleanup();
+        }
+      }
     }
   };
 
   useEffect(() => {
-    const interval = setInterval(grabScreenshot, screenshotTimeout);
-    grabScreenshot();
+    if (connected) {
+      const interval = setInterval(grabScreenshot, screenshotTimeout);
+      grabScreenshot();
 
-    return () => clearInterval(interval);
-  }, [recording, screenshotTimeout]);
+      return () => clearInterval(interval);
+    }
+  }, [connected, recording, screenshotTimeout]);
 
   const startRecording = async () => {
     await obs.current.send('StartRecording');
@@ -138,16 +147,16 @@ export default function App(props) {
     <SafeAreaView style={{ backgroundColor: '#333', height: '100%' }}>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12 }}>
         {!connected && <Button style={{ backgroundColor: '#555', marginRight: 20 }} onPress={reconnect}>Reconnect</Button>}
-        <ModalButton style={{ backgroundColor: '#555' }} onSave={setCredentials} modalContainerStyle={{ backgroundColor: '#eee', padding: 30 }} modal={Login} modalProps={{ credentials }}>Login</ModalButton>
+        <ModalButton style={{ backgroundColor: '#555' }} onSave={setCredentials} modalContainerStyle={{ backgroundColor: '#333', padding: 30 }} modal={Login} modalProps={{ credentials }}>Settings</ModalButton>
       </View>
 
-      <View style={{ flexDirection: 'row', minHeight: 160, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', minHeight: 120, alignItems: 'center' }}>
         <View style={{ width: 80, justifyContent: 'center', alignItems: 'center' }}>
           <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: statusColor }}></View>
         </View>
         <View style={{ flexDirection: 'column' }}>
-          <Text style={{ fontSize: 32, fontWeight: '600', color: '#fff' }}>{connected ? 'Connected' : 'Disconnected'}</Text>
-          <Text style={{ fontSize: 21, fontWeight: '300', color: '#fff' }}>{recordingStatus}</Text>
+          <Text style={{ fontSize: 38, fontWeight: '200', color: '#fff' }}>{connected ? 'Connected' : 'Disconnected'}</Text>
+          <Text style={{ fontSize: 18, fontWeight: '200', color: '#fff' }}>{recordingStatus}</Text>
         </View>
       </View>
 
@@ -161,7 +170,12 @@ export default function App(props) {
           {dimensions => {
             const outputSize = constrainAspectRatio(dimensions, imageDimensions);
 
-            return <Image style={{ width: outputSize.width, height: outputSize.height, backgroundColor: 'green' }} source={{ uri: imageSource }} />;
+            return (
+              <Fragment>
+                <Image style={{ width: outputSize.width, height: outputSize.height, backgroundColor: 'green', opacity: connected ? 1 : .2 }} source={{ uri: imageSource }} />
+                {!connected && <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}><Text style={{ color: '#fff' }}>Disconnected</Text></View>}
+              </Fragment>
+            );
           }}
         </Measure>}
       </View>

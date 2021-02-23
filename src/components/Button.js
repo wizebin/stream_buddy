@@ -7,8 +7,9 @@ const defaultStyle = {
   borderRadius: 8,
   elevation: 3,
   shadowOffset: { width: 1, height: 1 },
-  shadowOpacity: 0.4,
-  shadowColor: '#444',
+  shadowOpacity: 0.2,
+  shadowColor: 'rgba(0,0,0)',
+  shadowRadius: 1,
 };
 
 const defaultTextStyle = {
