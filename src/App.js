@@ -7,6 +7,7 @@ import OBS from 'obs-websocket-js';
 import Measure from './components/Measure';
 import { constrainAspectRatio } from './utilities/constrainAspectRatio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAppState } from './utilities/useAppState';
 
 export default function App() {
   const [credentials, setCredentials] = useState({});
@@ -17,6 +18,7 @@ export default function App() {
   const [pausedRecording, setPausedRecording] = useState(false);
   const [imageSource, setImageSource] = useState(null);
   const [imageDimensions, setImageDimensions] = useState(null);
+  const appState = useAppState();
   const obs = useRef();
 
   useEffect(() => {
@@ -40,7 +42,6 @@ export default function App() {
       obs.current?.disconnect();
       obs.current = null;
       setConnected(false);
-
     }
   };
 
@@ -125,6 +126,10 @@ export default function App() {
     persistCredentials();
     return cleanup;
   }, [credentials]);
+
+  useEffect(() => {
+    reconnect();
+  }, [appState]);
 
   let recordingStatus = 'Not Recording';
   let statusColor = '#777';
